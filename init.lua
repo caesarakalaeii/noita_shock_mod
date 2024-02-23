@@ -44,6 +44,9 @@ PlayerLost = true
 
 OldHp = -1
 OldHpMax = -1
+OldTime = 0
+OldIntense = 0
+OldTrigger = 0
 
 
 function OnModPreInit()
@@ -163,28 +166,52 @@ end
 function SetTime(value)
     print("SetTime", value)
 
-	StoreInt("shock_mod_time", 4, value)
+	if OldIntense ~= value then
+		AddFlagPersistent("shockModTime" .. "_" .. value)
+		RemoveFlagPersistent("shockModTime" .. "_" .. OldTime)
+		OldIntense = value
+	end
+
+	--StoreInt("shock_mod_time", 4, value)
 end
 
 function SetIntentsity(value)
     print("SetIntentsity", value)
+	if OldIntense ~= value then
+		AddFlagPersistent("shockModIntensity" .. "_" .. value)
+		RemoveFlagPersistent("shockModIntensity" .. "_" .. OldIntense)
+		OldIntense = value
+	end
 
-	StoreInt("shock_mod_intensity", 5, value)
+
+
+	--StoreInt("shock_mod_intensity", 5, value)
 end
 
 function TriggerShock()
     print("TriggerShock")
 
-	StoreInt("shock_mod_shocking", 1 , 1)
+	if OldTrigger ~= 1 then
+		AddFlagPersistent("shockModTrigger" .. "_" .. 1)
+		RemoveFlagPersistent("shockModTrigger" .. "_" .. 0)
+		OldTrigger = 1
+	end
+	-- StoreInt("shock_mod_shocking", 1 , 1)
 	
 end
 
 function ResetShock()
     print("ResetShock")
-
-	StoreInt("shock_mod_shocking", 1 , 0)
+	if OldTrigger ~= 0 then
+		AddFlagPersistent("shockModTrigger" .. "_" .. 0)
+		RemoveFlagPersistent("shockModTrigger" .. "_" .. 1)
+		OldTrigger = 0
+	end
+	-- StoreInt("shock_mod_shocking", 1 , 0)
 	
 end
+
+
 
 function ResetAllFlags()
 	print("resetting Flags")
@@ -196,6 +223,7 @@ end
 
 
 -- Incredible hack thanks to Horscht
+-- will not be used reading inst from the file name seems more reliable
 function StoreInt(name, num_bits, val)
 	if type(val) ~= "number" then
 	  error("value must be a number")
