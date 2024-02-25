@@ -40,16 +40,22 @@ end
 -- TODO: Make toggles in UI
 TestMode = false
 Linear  = true
-PlayerLost = true
+MaxIntense = 25
+DeltaMultiplier = 2000
+ModIdent = "shockmod"
 
+
+
+-- Default Values
+PlayerLost = true
 OldHp = -1
 OldHpMax = -1
 OldTime = 0
 OldIntense = 0
-OldTrigger = 0
+OldTrigger = -1
 
 
-function OnModPreInit()
+function OnWorldInitialized()
 	print("Init called")
 	ResetAllFlags()
 end
@@ -77,7 +83,6 @@ function OnWorldPostUpdate()
 			end
 			if hp == OldHp then
 				return
-
 			else
 				OnHPChange(hp, hp_max)
 			end
@@ -97,37 +102,50 @@ end
 
 function OnHPChange(hp, hp_max)
 	print("HP Changed")
+	
+
 	local hp_per = math.floor(100*hp/hp_max)
+	print("HP Percentage: "..hp_per)
 	if hp_per >= 99 then
+		local intensity = CalculateIntensity(hp, hp_max)
+		print("Player HP: " .. hp .. " / " .. hp_max)
+		print("Current intensity: ", intensity)
+		SetIntentsity(intensity)
 		return
 	end
 	if hp<OldHp then
-		local delta = math.floor(OldHp-hp)
+		local delta = math.floor(DeltaMultiplier*(OldHp-hp)/(hp_max))
+		print("HP delta: ".. delta)
 		if delta == 0 then
 			delta =  1
 		end
 		SetTime(delta)
 		TriggerShock()
 	end
+	print("Calculating intensity")
 
 	local intensity = CalculateIntensity(hp, hp_max)
 	print("Player HP: " .. hp .. " / " .. hp_max)
 	print("Current intensity: ", intensity)
-	SetIntentsity(math.floor(intensity))
+	SetIntentsity(intensity)
 
-	ResetShock()
+	
 end
 
 function CalculateIntensity(hp, hp_max)
 	local intensity = 1
 	local hp_per = math.floor(100*hp/hp_max)
 	print("HP Percentage: ", hp_per)
+	if hp_per == 100 then
+		print("Full HP, setting intensity to 1")
+		return 1
+	end
 	if (Linear) then
 		
-		intensity = math.floor(-hp_per/4 + 25) -- 1/4 * hp% + 25 , 25 being the max intensity
+		intensity = math.floor(((-MaxIntense/100) * hp_per) + MaxIntense) -- -1/4 * hp% + max_intense , max_intense being the max intensity
 	else
 		if hp_per <= 5 then
-			intensity = 25
+			intensity = MaxIntense
 		else
 			intensity = math.floor(100/hp_per)
 		end
@@ -154,7 +172,7 @@ end
 
 function OnPlayerDied( player_entity )
 	if PlayerLost then
-		SetIntentsity(25)
+		SetIntentsity(MaxIntense)
 		TriggerShock()
 	end
 	ResetAllFlags()
@@ -166,10 +184,12 @@ end
 function SetTime(value)
     print("SetTime", value)
 
-	if OldIntense ~= value then
-		AddFlagPersistent("shockModTime" .. "_" .. value)
-		RemoveFlagPersistent("shockModTime" .. "_" .. OldTime)
-		OldIntense = value
+	if OldTime ~= value then
+		AddFlagPersistent(ModIdent.."_time_" .. value)
+		if OldTime ~= 0 then
+			RemoveFlagPersistent(ModIdent.."_time_" .. OldTime)
+		end
+		OldTime = value
 	end
 
 	--StoreInt("shock_mod_time", 4, value)
@@ -178,8 +198,10 @@ end
 function SetIntentsity(value)
     print("SetIntentsity", value)
 	if OldIntense ~= value then
-		AddFlagPersistent("shockModIntensity" .. "_" .. value)
-		RemoveFlagPersistent("shockModIntensity" .. "_" .. OldIntense)
+		AddFlagPersistent(ModIdent.."_intensity_" .. value)
+		if OldIntense ~= 0 then
+			RemoveFlagPersistent(ModIdent.."_intensity_" .. OldIntense)
+		end
 		OldIntense = value
 	end
 
@@ -189,66 +211,37 @@ function SetIntentsity(value)
 end
 
 function TriggerShock()
-    print("TriggerShock")
+    print("TriggerShock, setting flag: ".. ModIdent.."_trigger" .. "_" .. 1)
+	if(AddFlagPersistent(ModIdent.."_trigger" .. "_" .. 1)) then
+		print("flag set successfully")
+	else
+		print("flag set unsuccessfully, removing, readding")
+		RemoveFlagPersistent(ModIdent.."_trigger" .. "_" .. 1)
+		print("flag removed successfully")
 
-	if OldTrigger ~= 1 then
-		AddFlagPersistent("shockModTrigger" .. "_" .. 1)
-		RemoveFlagPersistent("shockModTrigger" .. "_" .. 0)
-		OldTrigger = 1
+		AddFlagPersistent(ModIdent.."_trigger" .. "_" .. 1)
+		print("flag reset successfully")
+
 	end
 	-- StoreInt("shock_mod_shocking", 1 , 1)
 	
 end
 
-function ResetShock()
-    print("ResetShock")
-	if OldTrigger ~= 0 then
-		AddFlagPersistent("shockModTrigger" .. "_" .. 0)
-		RemoveFlagPersistent("shockModTrigger" .. "_" .. 1)
-		OldTrigger = 0
-	end
-	-- StoreInt("shock_mod_shocking", 1 , 0)
-	
-end
 
 
 
 function ResetAllFlags()
 	print("resetting Flags")
-	SetIntentsity(0)
-	SetTime(0)
-	ResetShock()
+	RequestCleanUp() -- this grew like this ok???
 	print("resetting Flags sucessfully")
 end
 
 
--- Incredible hack thanks to Horscht
--- will not be used reading inst from the file name seems more reliable
-function StoreInt(name, num_bits, val)
-	if type(val) ~= "number" then
-	  error("value must be a number")
-	end
-  
-	for i=1, num_bits do
-	  if bit.band(val, 1) == 1 then
-		AddFlagPersistent(name .. "_" .. i)
-	  else
-		RemoveFlagPersistent(name .. "_" .. i)
-	  end
-	  val = bit.rshift(val, 1)
-	end
-  end
-  
-function RetrieveInt(name, num_bits)
-	local value = 0
-	for i=1, num_bits do
-	  local bit = HasFlagPersistent(name .. "_" .. i) and 1 or 0
-	  if bit > 0 then
-		value = value + 2 ^ (i - 1)
-	  end
-	end
-	return value
+function RequestCleanUp()
+	print("Cleaning up Flags")
+	AddFlagPersistent("shockmod_cleanup")
 end
+
 
 
 

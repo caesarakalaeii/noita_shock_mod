@@ -1,3 +1,11 @@
 {
-    "flag_path": ""
+    "flag_path": "PATH_TO_YOUR_NOITA_SAVE\\save00\\persistent\\flags",
+    "time_prefix": "time",
+    "intensity_prefix": "intensity",
+    "trigger_prefix": "trigger",
+    "cleanup_identifier": "cleanup",
+    "mod_ident": "shockmod",
+    "baud_rate": "9200",
+    "serial_port": "COM6"
+
 }
