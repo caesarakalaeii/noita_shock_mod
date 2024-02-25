@@ -14,14 +14,17 @@ class Noita2Serial:
         print("Loading Config")
         config = self.load_config(config_path)
         self.cooldown = False
-        self.d = Decoder(config, debug_mode)
+        self.trigger = False
+        self.time = 0
+        self.intensity = 0
+        self.value_change = False
+        self.d = Decoder(config)
         self.Debug = debug_mode
         self.s = serial.Serial(config["serial_port"], int(config["baud_rate"]), timeout=1)
         try:
             self.s.open()
         except Exception as e:
             print(f"{e}")
-            # self.s.close()
             # exit()
         print("Config loaded")
         
@@ -40,47 +43,56 @@ class Noita2Serial:
         with open(config_file, 'w') as f:
             json.dump(config, f, indent=4)
     
-    def shock(self, time : int):
-        
-        data = f"shock{time}\n" # shift by 8 to left to get mode bit
-        if self.Debug:
-            
+    
+    def send_to_serial(self):
+        #s1t9999i999 -- s flag indicates shock needed, t flag set time to shock, i flag sets intensity
+        s=0
+        if self.trigger:
+            s=1
             self.d.reset_trigger()
-            self.cooldown = False
-            print(f"Shock send with data: {data}")
-            return
-        self.s.write(data.encode())
-        self.d.reset_trigger()
-        self.cooldown = False
+            self.trigger = False    
+            
+        t=f"{self.time}"
+        while len(t)<4:
+            t= "0"+t
+        i=f"{self.intensity}"
+        while len(i)<3:
+            i = "0" + i
+        data = f"s{s}t{t}i{i}"
+        print(f"Data is : {data}")
         
-        
-    def set_intensity(self, intensity : int):
-        data = f"intensity{intensity}" # no shift necessary?
-        if self.Debug:
-            print(f"Intensity send with data: {data}")
-            return
         self.s.write(data.encode())
+        
+        self.value_change = False
+
     
     
     async def loop(self):
         
         print("Starting Main Loop")
         old_insensity = 1
-        self.set_intensity(1)
+        
         while(True):
+            
             data =self.d.read_files()
-            print(f"Data found: {data}")
+            #print(f"Data found: {data}")
             if(data["cleanup"]): # check if cleanup flag has been set, if so delete flag files
                 print("Cleanup request detected")
                 self.d.cleanup_flags()
                 continue
-            trigger = bool(data["trigger"]) #get trigger status as bool
-            if trigger and not self.cooldown: #if trigger is set
-                self.cooldown = True
-                self.shock(data["time"]) # send shock trigger with appropriate time
-            if old_insensity != data["intensity"]: # check for intensity change
-                self.set_intensity(data["intensity"]) # register intensity change
-                old_insensity = data["intensity"] 
+            self.trigger = bool(data["trigger"]) #get trigger status as bool
+            self.time = data["time"]
+            self.intensity = data["intensity"]
+            if self.trigger: #if trigger is set
+                self.value_change = True
+                #self.shock(data["time"]) # send shock trigger with appropriate time
+            if old_insensity != self.intensity: # check for intensity change
+                #self.set_intensity(data["intensity"]) # register intensity change
+                self.value_change = True
+                old_insensity = self.intensity
+            if self.value_change:
+                self.value_change = False
+                self.send_to_serial()
             await asyncio.sleep(0.2)
             
     def start(self):
@@ -92,6 +104,6 @@ class Noita2Serial:
         
         
 if __name__ == "__main__":
-    main = Noita2Serial(debug_mode=True)
+    main = Noita2Serial()
     print("Starting Listener")
     main.start()
