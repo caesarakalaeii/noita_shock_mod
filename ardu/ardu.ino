@@ -20,6 +20,8 @@ void setup() {
 
 void shock(int wait) {
   // Set pin high
+  Serial.println("Shock called");
+  Serial.println(wait, DEC);
   digitalWrite(SHOCK_PIN, LOW);
   // Wait for intensity milliseconds
   delay(wait);
@@ -31,51 +33,62 @@ void shock(int wait) {
 void intensity(int intensity) {
   // Set pin high
   int delta = intensity - old_intensity;
+  Serial.println("Intensity called");
+  Serial.println(delta, DEC);
   if (delta==0){
     return;
   }
   else if (delta > 0){
+    Serial.println("Upping intensity");
+    Serial.println(delta, DEC);
     for(int i = 0; i<delta; i++){
+      delay(30);
       digitalWrite(INTENSITY_UP_PIN, LOW);
-      delay(50); // You can modify this if needed
+      delay(30); // You can modify this if needed
       // Set pin low
       digitalWrite(INTENSITY_UP_PIN, HIGH);
     }
   }
   else{
+    Serial.println("Decreasing intensity");
+    Serial.println(delta, DEC);
     for(int i = 0; i<delta*-1; i++){
+      delay(30);
       digitalWrite(INTENSITY_DOWN_PIN, LOW);
-      delay(50); // You can modify this if needed
+      delay(30); // You can modify this if needed
       // Set pin low
       digitalWrite(INTENSITY_DOWN_PIN, HIGH);
     }
   }
-  
+  old_intensity = intensity;
   Serial.println("Intensity finished.");
+  Serial.println(intensity);
 }
 
 void loop() {
-  // Wait for the first byte of data to arrive
-  while (Serial.available() < 2) {
-    // Do nothing
+  // Check if data is available to read
+  if (Serial.available() > 0) {
+    // Read the string until newline character ('\n')
+    String data = Serial.readStringUntil('\n');
+    // Indicate received data
+    Serial.print("Received data: ");
+    Serial.println(data);
+
+    // Check if the received string starts with 'shock' or 'intensity'
+    if (data.startsWith("shock")) {
+      // Extract the intensity value from the string
+      int intensityValue = data.substring(5).toInt();
+      // Indicate parsed intensity value
+      Serial.print("Parsed intensity value: ");
+      Serial.println(intensityValue);
+      shock(intensityValue);
+    } else if (data.startsWith("intensity")) {
+      // Extract the intensity value from the string
+      int intensityValue = data.substring(9).toInt();
+      // Indicate parsed intensity value
+      Serial.print("Parsed intensity value: ");
+      Serial.println(intensityValue);
+      intensity(intensityValue);
+    }
   }
-
-  // Read the two bytes and combine them into a 16-bit integer
-  int16_t receivedValue = Serial.read() | (Serial.read() << 8);
-
-  // Extract the first bit (bit 15)
-  bool isFirstBitSet = (receivedValue >> 15) & 0x01;
-
-  // Extract the last 15 bits
-  int value = receivedValue & 0x7FFF;
-
-  // Call the appropriate function based on the first bit
-  if (isFirstBitSet) {
-    shock(value); // Call the "shock" function
-  } else {
-    intensity(value); // Call the "intensity" function
-  }
-
-  // Optional: delay before reading the next value
-  delay(1000);
 }

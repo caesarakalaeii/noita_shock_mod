@@ -21,8 +21,8 @@ class Noita2Serial:
             self.s.open()
         except Exception as e:
             print(f"{e}")
-            self.s.close()
-            exit()
+            # self.s.close()
+            # exit()
         print("Config loaded")
         
         pass
@@ -41,25 +41,25 @@ class Noita2Serial:
             json.dump(config, f, indent=4)
     
     def shock(self, time : int):
-        mode = 1 << 15
-        data = mode +time # shift by 8 to left to get mode bit
+        
+        data = f"shock{time}\n" # shift by 8 to left to get mode bit
         if self.Debug:
-            print("Shock send with data: {0:b}".format(data), "Mode being: {0:b}".format(mode), f"Time being: {time}")
+            
             self.d.reset_trigger()
             self.cooldown = False
-            
+            print(f"Shock send with data: {data}")
             return
-        self.s.write(data.to_bytes(length=2, byteorder='big'))
+        self.s.write(data.encode())
         self.d.reset_trigger()
         self.cooldown = False
         
         
     def set_intensity(self, intensity : int):
-        data = intensity # no shift necessary?
+        data = f"intensity{intensity}" # no shift necessary?
         if self.Debug:
-            print("Intensity send with data: {0:b}".format(data), f" Intensity being: {intensity}")
+            print(f"Intensity send with data: {data}")
             return
-        self.s.write(data.to_bytes(length=2, byteorder='big'))
+        self.s.write(data.encode())
     
     
     async def loop(self):
