@@ -8,7 +8,7 @@ int click_delay = 50;
 
 void setup() {
   // Initialize serial communication:
-  Serial.begin(9600);
+  Serial.begin(115200);
   // Set pins as output
   
   pinMode(SHOCK_PIN, OUTPUT);
