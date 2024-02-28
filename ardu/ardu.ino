@@ -1,10 +1,10 @@
 #define SHOCK_PIN 2
-#define INTENSITY_UP_PIN 3
-#define INTENSITY_DOWN_PIN 4
+#define INTENSITY_UP_PIN 4
+#define INTENSITY_DOWN_PIN 3
 
 
 int old_intensity = 1;
-int click_delay = 50;
+int click_delay = 35;
 
 void setup() {
   // Initialize serial communication:
@@ -46,6 +46,21 @@ void intensity(int intensity) {
   else if (delta > 0){
     //Serial.println("Upping intensity");
     //Serial.println(delta, DEC);
+    if (old_intensity > 0)
+    {
+      // Step 1 Intensity down and up to unlock TENS unit
+      delay(click_delay);
+      digitalWrite(INTENSITY_DOWN_PIN, LOW);
+      delay(click_delay); // You can modify this if needed
+        // Set pin low
+      digitalWrite(INTENSITY_DOWN_PIN, HIGH);
+      
+      delay(click_delay);
+      digitalWrite(INTENSITY_UP_PIN, LOW);
+      delay(click_delay); // You can modify this if needed
+        // Set pin low
+      digitalWrite(INTENSITY_UP_PIN, HIGH);
+    }
     for(int i = 0; i<delta; i++){
       delay(click_delay);
       digitalWrite(INTENSITY_UP_PIN, LOW);

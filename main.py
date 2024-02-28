@@ -1,6 +1,6 @@
 import asyncio
 import os
-import struct
+import time
 import serial
 import json
 from decoder import Decoder
@@ -71,7 +71,7 @@ class Noita2Serial:
         
         print("Starting Main Loop")
         old_insensity = 1
-        
+        last_time = time.time()
         while(True):
             
             data =self.d.read_files()
@@ -93,7 +93,13 @@ class Noita2Serial:
             if self.value_change:
                 self.value_change = False
                 self.send_to_serial()
-            await asyncio.sleep(0.2)
+            elif time.time() - last_time >=  25 * 60: #if 25 minutes have elapsed, reset timeout timer of the tens unit
+                self.intensity = 0
+                self.send_to_serial()
+                await asyncio.sleep(1)
+                self.intensity = old_insensity
+                self.send_to_serial()
+            await asyncio.sleep(0.02)
             
     def start(self):
         asyncio.run(self.loop())
