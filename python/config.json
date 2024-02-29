@@ -1,11 +1,16 @@
 {
-    "flag_path": "E:\\SteamLibrary\\steamapps\\common\\Noita\\save00\\persistent\\flags",
+    "comment1": "CHANGE THIS TO FIT YOUR NEEDS",
+
+    "flag_path": "PATH_TO_YOUR_NOITA_SAVES\\save00\\persistent\\flags",
+    "serial_port": "COM6",
+
+    "comment2": "DONT CHANGE THESE UNLESS YOU KNOW WHAT YOU'RE DOING",
+    
     "time_prefix": "time",
     "intensity_prefix": "intensity",
     "trigger_prefix": "trigger",
     "cleanup_identifier": "cleanup",
     "mod_ident": "shockmod",
-    "baud_rate": "115200",
-    "serial_port": "COM6"
+    "baud_rate": "115200"
 
 }
