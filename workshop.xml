@@ -1,0 +1,8 @@
+<Mod
+    name="Noita Shock Mod"
+    description="The most shocking mod out there, literally. Needs additional Soft- and Hardware to function see https://github.com/caesarakalaeii/noita_shock_mod"
+    tags="funny,gameplay,streaming integration"
+    dont_upload_folders=".vscode|__pycache__|ardu|python"
+    dont_upload_files="readme.md|.gitignore"
+    >
+</Mod>
