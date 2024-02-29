@@ -102,7 +102,10 @@ class Noita2Serial:
             await asyncio.sleep(0.02)
             
     def start(self):
-        asyncio.run(self.loop())
+        try:
+            asyncio.run(self.loop())
+        except:
+            self.stop() # close serial on shut down
     
     def stop(self):
         self.s.close()
