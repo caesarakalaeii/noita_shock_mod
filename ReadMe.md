@@ -1,7 +1,7 @@
 # Noita Shock Mod  
 This mod enables Noita to electrocute you, whenever you get damaged.  
 You will need some additional Hardware, namely an Arduino, a TENS unit, a relay board (3 relay min), some wiring, and one 1k Ohm resistor.  
-  
+If you need help setting this up, feel free to contact me on Discord (caesarlp).  
   
 ## Why?  
 Good question.  
@@ -17,8 +17,10 @@ Run the file main.py and start a new game with the mod enabled.
 Check if everything works as expected, put on the electrodes, and have "fun".  
   
 ## Common Problems:  
-  
-If I find any Problems to be commonly occurring, I'll add them here  
+
+
+If I find any Problems to be commonly occurring, I'll add them here.  
+
   
 ## TODO:  
   
