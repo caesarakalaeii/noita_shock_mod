@@ -1,0 +1,16 @@
+{
+    "comment1": "CHANGE THIS TO FIT YOUR NEEDS",
+
+    "flag_path": "C:\\Users\\Caesar\\AppData\\LocalLow\\Nolla_Games_Noita\\save00\\persistent\\flags",
+    "serial_port": "COM6",
+
+    "comment2": "DONT CHANGE THESE UNLESS YOU KNOW WHAT YOU'RE DOING",
+    
+    "time_prefix": "time",
+    "intensity_prefix": "intensity",
+    "trigger_prefix": "trigger",
+    "cleanup_identifier": "cleanup",
+    "mod_ident": "shockmod",
+    "baud_rate": "115200"
+
+}

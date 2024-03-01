@@ -1,4 +1,5 @@
 # Noita Shock Mod  
+## DISCLAIMER: Use this at your own risk! You will modify a device that will induce electro shocks to you. If you're unsure if this is safe, contact your doctor! You are liable for all damages this might casue to you!
 This mod enables Noita to electrocute you, whenever you get damaged.  
 You will need some additional Hardware, namely an Arduino, a TENS unit, a relay board (3 relay min), some wiring, and one 1k Ohm resistor.  
 If you need help setting this up, feel free to contact me on Discord (caesarlp).  
