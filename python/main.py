@@ -2,6 +2,7 @@ import asyncio
 import os
 import time
 import serial
+import requests
 import json
 from decoder import Decoder
 
@@ -12,15 +13,17 @@ class Noita2Serial:
     
     def __init__(self, config_path= "config.json", debug_mode = False) -> None:
         print("Loading Config")
-        config = self.load_config(config_path)
+        self.config = self.load_config(config_path)
         self.cooldown = False
         self.trigger = False
         self.time = 0
         self.intensity = 0
         self.value_change = False
-        self.d = Decoder(config)
+        self.d = Decoder(self.config)
+        self.mode = self.config["mode"]
         self.Debug = debug_mode
-        self.s = serial.Serial(config["serial_port"], int(config["baud_rate"]), timeout=1)
+        if self.mode == "tens":
+            self.s = serial.Serial(self.config["tens"]["serial_port"], int(self.config["tens"]["baud_rate"]), timeout=1)
         try:
             self.s.open()
         except Exception as e:
@@ -65,18 +68,64 @@ class Noita2Serial:
         
         self.value_change = False
 
+    def send_to_pishock(self, intensity):
+        c: dict = self.config["pishock"]
+        payload = {
+            "Username": c["Username"],
+            "Name": c["Name"],
+            "Code": c["Code"],
+            "Intensity": f"{intensity}",
+            "Duration": f"{self.time}",
+            "Apikey": c["Apikey"],
+            "Op": "0"
+        }
+
+        headers = {
+            "Content-Type": "application/json"
+        }
+
+        try:
+            response = requests.post(endpoint_url, data=json.dumps(payload), headers=headers)
+            # Return or print the response text for debugging
+            return response.text
+        except requests.exceptions.RequestException as e:
+            # Handle any request exceptions
+            print(f"Request failed: {e}")
+            return None
+
+    async def pishock_loop(self):
+        print("Starting Main Loop")
+        old_insensity = 1
+        last_time = time.time()
+        while True:
+
+            data = self.d.read_files()
+            # print(f"Data found: {data}")
+            if data["cleanup"]:  # check if cleanup flag has been set, if so delete flag files
+                print("Cleanup request detected")
+                self.d.cleanup_flags()
+                continue
+            self.trigger = bool(data["trigger"])  # get trigger status as bool
+            self.time = data["time"]
+            self.intensity = data["intensity"]
+            if self.trigger:  # if trigger is set
+                self.send_to_pishock()
+            if old_insensity != self.intensity:  # check for intensity change
+                # self.set_intensity(data["intensity"]) # register intensity change
+                old_insensity = self.intensity
+
+            await asyncio.sleep(0.02)
     
-    
-    async def loop(self):
+    async def serial_loop(self):
         
         print("Starting Main Loop")
         old_insensity = 1
         last_time = time.time()
-        while(True):
+        while True:
             
             data =self.d.read_files()
             #print(f"Data found: {data}")
-            if(data["cleanup"]): # check if cleanup flag has been set, if so delete flag files
+            if data["cleanup"]: # check if cleanup flag has been set, if so delete flag files
                 print("Cleanup request detected")
                 self.d.cleanup_flags()
                 continue
@@ -103,7 +152,10 @@ class Noita2Serial:
             
     def start(self):
         try:
-            asyncio.run(self.loop())
+            if self.mode == "tens":
+                asyncio.run(self.serial_loop())
+            if self.mode == "pishock":
+                asyncio.run(self.pishock_loop())
         except:
             self.stop() # close serial on shut down
     
